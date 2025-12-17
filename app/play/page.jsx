@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import "../globals.css";
 
 import { initializeApp } from "firebase/app";
 import {
