@@ -1,0 +1,24 @@
+.buttons-container {
+  display: flex;
+  flex-direction: row; /* par défaut : boutons côte à côte */
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .buttons-container {
+    flex-direction: column; /* empilement vertical seulement sur mobile */
+    gap: 12px;
+    align-items: center; /* centré sur mobile seulement */
+  }
+
+  .notice {
+    margin-top: 10px;
+    font-size: 0.95rem;
+  }
+
+  .image img {
+    margin-top: 10px;
+  }
+}
