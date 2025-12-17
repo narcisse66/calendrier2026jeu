@@ -58,6 +58,7 @@ export default function RankPage() {
   return (
     <div
       style={{
+        classname: "rankcontainer",
         width: "100%",
         maxWidth: "900px",
         background: "rgba(255,255,255,0.08)",
@@ -101,7 +102,7 @@ export default function RankPage() {
                 height: "50px",
               }}
             >
-              <th>#</th>
+              <th>N°</th>
               <th>Score</th>
               <th>Date</th>
             </tr>
@@ -111,7 +112,7 @@ export default function RankPage() {
             {scores.length === 0 && (
               <tr>
                 <td colSpan="3" style={{ padding: "15px" }}>
-                  Aucun score enregistré
+                  Aucun score enregistré pour le moment.
                 </td>
               </tr>
             )}
@@ -124,7 +125,7 @@ export default function RankPage() {
                   height: "48px",
                 }}
               >
-                <td>{idx + 1}</td>
+                <td style={{ padding:"15px"}}>{idx + 1}</td>
                 <td style={{ color: "#ffd166", fontWeight: "bold" }}>
                   {item.score} / 12
                 </td>
