@@ -12,9 +12,10 @@ export default function HomePage() {
         <h1>
           🎁 Jeu de Calendrier <span>2026</span>
         </h1>
+      
         <p>
-          Amusez-vous à trouver les douze métiers cachés derrière chaque mois
-          de ce calendrier de la nouvelle année !
+          Chaque mois cache un métier derrière une image : à vous de tous les deviner en tapant vos réponses en seulement 3 minutes.
+        
         </p>
 
         <ul className="features">
