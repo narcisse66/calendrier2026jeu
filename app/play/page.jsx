@@ -239,7 +239,7 @@ export default function PlayPage() {
                    maxWidth: "1000px",
                    maxHeight: "65vh",
                    objectFit: "contain",
-                   borderRadius: "22px",
+                   
                    marginBottom: "8px",
                  }}
                />
