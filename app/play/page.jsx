@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { Check, X } from "lucide-react";
+
 
 import { initializeApp } from "firebase/app";
 import {
@@ -59,12 +61,12 @@ const normalize = (text) =>
 
 export default function PlayPage() {
 
-
-
   const [time, setTime] = useState(180);
   const [score, setScore] = useState(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const timerRef = useRef(null);
+  const [results, setResults] = useState({});
+
 
   const months = [
     "janvier",
@@ -103,31 +105,27 @@ export default function PlayPage() {
     const form = document.getElementById("game");
     const data = new FormData(form);
 
+    const newResults = {};
+
     months.forEach((month) => {
-      const input = form.querySelector(`input[name="${month}"]`);
       const userAnswer = normalize(data.get(month) || "");
       const validAnswers = answers[month].map(normalize);
 
-      if (validAnswers.includes(userAnswer)) formScore++;
+      const isValid = validAnswers.includes(userAnswer);
 
-      let icon = input.parentElement.querySelector(".status");
-      if (!icon) {
-        icon = document.createElement("span");
-        icon.classList.add("status");
-        input.parentElement.appendChild(icon);
-      }
+      if (isValid) formScore++;
 
-      icon.textContent = validAnswers.includes(userAnswer) ? "✔" : "✖";
-      icon.className = validAnswers.includes(userAnswer)
-        ? "status good"
-        : "status bad";
+      newResults[month] = isValid;
+    });
 
+    setResults(newResults);
+    setScore(formScore);
+
+    // désactiver les inputs
+    form.querySelectorAll("input").forEach((input) => {
       input.disabled = true;
     });
 
-    setScore(formScore);
-
-    // ✅ Enregistrement ANONYME du score
     try {
       await setDoc(doc(db, "scores", crypto.randomUUID()), {
         score: formScore,
@@ -139,16 +137,18 @@ export default function PlayPage() {
   };
 
 
+
   const handleRetry = () => {
     setScore(null); // réinitialiser le score
     setCurrentSlide(0); // revenir au premier slide
-    // réactiver les inputs
+    setResults({});
+
+    // réinitialiser le formulaire
     const form = document.getElementById("game");
     form.querySelectorAll("input").forEach((input) => {
       input.value = "";
       input.disabled = false;
-      const icon = input.parentElement.querySelector(".status");
-      if (icon) icon.remove();
+     
     });
     // relancer le timer
     setTime(180);
@@ -239,7 +239,7 @@ export default function PlayPage() {
                    maxWidth: "1000px",
                    maxHeight: "65vh",
                    objectFit: "contain",
-                   
+
                    marginBottom: "8px",
                  }}
                />
@@ -266,6 +266,18 @@ export default function PlayPage() {
                    textAlign: "center",
                  }}
                />
+               {score !== null && results[month] !== undefined && (
+                 <span
+                   className={`status ${results[month] ? "good" : "bad"}`}
+                   style={{ marginTop: "10px" }}
+                 >
+                   {results[month] ? (
+                     <Check size={28} />
+                   ) : (
+                     <X size={28} />
+                   )}
+                 </span>
+               )}
              </div>
            ))}
          </div>
