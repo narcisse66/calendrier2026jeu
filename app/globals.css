@@ -127,14 +127,14 @@ body {
 /* =========================
    STATUS (JEU)
 ========================= */
+ .status {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
 
-.status {
-  position: absolute;
-  top: 18px;
-  right: 18px;
-  font-size: 2rem;
-  font-weight: bold;
-}
+
 
 .status.good {
   color: #2ecc71;
@@ -188,10 +188,8 @@ body {
      
     margin-top: "100px" !important;
   }
-}
 
 
-@media (max-width: 768px) {
   .card.slide {
     padding: 12px !important;
     gap: 8px;
@@ -206,7 +204,32 @@ body {
     width: 90% !important;
   }
 
-    .slide-image {
+  .slide-image {
     max-height: 35vh !important;
   }
+
+
+
+  .status-icon {
+  width: 75px;
+  height: 75px;
+  }
 }
+
+
+
+/* =========================
+   TABLET + DESKTOP
+========================= */
+@media (min-width: 769px) {
+
+ 
+
+  .status-icon {
+    width: 125px;
+    height: 125px;
+  }
+
+}
+
+

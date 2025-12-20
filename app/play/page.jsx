@@ -165,8 +165,11 @@ export default function PlayPage() {
   };
 
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % months.length);
-  const prevSlide = () =>
-    setCurrentSlide((prev) => (prev - 1 + months.length) % months.length);
+  const prevSlide = () => {
+    if (currentSlide === 0) return; // si janvier, ne rien faire
+    setCurrentSlide(currentSlide - 1);
+  };
+
 
   const minutes = String(Math.floor(time / 60)).padStart(2, "0");
   const seconds = String(time % 60).padStart(2, "0");
@@ -256,6 +259,7 @@ export default function PlayPage() {
                <input
                  name={month}
                  type="text"
+                 disabled={score !== null} // désactive après validation
                  style={{
                    width: "75%",
                    maxWidth: "350px",
@@ -264,17 +268,17 @@ export default function PlayPage() {
                    borderRadius: "12px",
                    border: "none",
                    textAlign: "center",
+                   backgroundColor: score !== null ? "#e0e0e0" : "white", // gris après validation, blanc avant
+                  
                  }}
                />
+
                {score !== null && results[month] !== undefined && (
-                 <span
-                   className={`status ${results[month] ? "good" : "bad"}`}
-                   style={{ marginTop: "10px" }}
-                 >
+                 <span className={`status ${results[month] ? "good" : "bad"}`}>
                    {results[month] ? (
-                     <Check size={28} />
+                     <Check className="status-icon" />
                    ) : (
-                     <X size={28} />
+                     <X className="status-icon" />
                    )}
                  </span>
                )}
@@ -327,22 +331,24 @@ export default function PlayPage() {
        </div>
 
        {/* SUBMIT */}
-       <button
-         type="submit"
-         style={{
-           display: "block",
-           margin: "0 auto",
-           padding: "16px 40px",
-           borderRadius: "999px",
-           border: "none",
-           fontWeight: "bold",
-           fontSize: "1.2rem",
-           background: "linear-gradient(135deg, #ffd166, #ff9f1c)",
-           cursor: "pointer",
-         }}
-       >
-         Valider mes réponses
-       </button>
+       {currentSlide === months.length - 1 && (
+         <button
+           type="submit"
+           style={{
+             display: "block",
+             margin: "0 auto",
+             padding: "16px 40px",
+             borderRadius: "999px",
+             border: "none",
+             fontWeight: "bold",
+             fontSize: "1.2rem",
+             background: "linear-gradient(135deg, #ffd166, #ff9f1c)",
+             cursor: "pointer",
+           }}
+         >
+           Valider mes réponses
+         </button>
+       )}
      </form>
 
      {/* RESULT */}
