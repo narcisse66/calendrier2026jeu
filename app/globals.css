@@ -208,6 +208,10 @@ body {
     max-height: 35vh !important;
   }
 
+    .slide-image {
+    max-height: 40vh; /* réduit la hauteur sur mobile */
+    margin-bottom: 4px; /* moins d’espace entre image et label */
+  }
 
 
   .status-icon {
@@ -216,6 +220,15 @@ body {
   }
 }
 
+
+
+/* Mobile */
+@media (max-width: 768px) {
+  .slide-image {
+    max-height: 40vh !important; /* réduit la hauteur sur mobile */
+    margin-bottom: 2px !important; /* moins d’espace entre image et label */
+  }
+}
 
 
 /* =========================

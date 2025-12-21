@@ -1,20 +1,13 @@
- "use client";
+"use client";
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Check, X } from "lucide-react";
 
-
 import { initializeApp } from "firebase/app";
-import {
-  getFirestore,
-  doc,
-  setDoc,
-  getDoc,
-  updateDoc,
-} from "firebase/firestore";
+import { getFirestore, doc, setDoc } from "firebase/firestore";
 
-
+// 🔒 Config Firebase
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -59,29 +52,123 @@ const normalize = (text) =>
     .replace(/\s+/g, " ")
     .trim();
 
-export default function PlayPage() {
+// Composant Modal
+function RecapModal({ results, onClose }) {
+  const months = Object.keys(results);
 
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        background: "rgba(0,0,0,0.6)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 1000,
+      }}
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "rgba(255,255,255,0.1)",
+          padding: "30px",
+          borderRadius: "24px",
+          maxWidth: "800px",
+          width: "90%",
+          maxHeight: "90vh", // limite la hauteur à 90% de l'écran
+          overflowY: "auto", // permet de scroller verticalement si besoin
+          backdropFilter: "blur(10px)",
+        }}
+      >
+        <h2
+          style={{
+            textAlign: "center",
+            color: "#ffd166",
+            marginBottom: "20px",
+          }}
+        >
+          📝 Récapitulatif de tes réponses
+        </h2>
+
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            textAlign: "center",
+          }}
+        >
+          <thead>
+            <tr style={{ color: "#ffd166", height: "40px" }}>
+              <th>Mois</th>
+              <th>Réponse</th>
+              <th>Résultat</th>
+            </tr>
+          </thead>
+          <tbody>
+            {months.map((month, idx) => (
+              <tr
+                key={month}
+                style={{
+                  borderBottom: "1px solid rgba(255,255,255,0.2)",
+                  height: "45px",
+                }}
+              >
+                <td>{month}</td>
+                <td>
+                  {results[month].userAnswer
+                    ? results[month].userAnswer.length > 7
+                      ? results[month].userAnswer.slice(0, 7) + "…"
+                      : results[month].userAnswer
+                    : "-"}
+                </td>
+
+                <td>
+                  {results[month].isValid ? (
+                    <Check color="#00ff7f" size={20} />
+                  ) : (
+                    <X color="#ff4d4d" size={20} />
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div style={{ textAlign: "center", marginTop: "20px" }}>
+          <button
+            onClick={onClose}
+            style={{
+              padding: "10px 25px",
+              borderRadius: "999px",
+              background: "linear-gradient(135deg, #ffd166, #ff9f1c)",
+              border: "none",
+              fontWeight: "bold",
+              cursor: "pointer",
+              marginTop: "10px",
+            }}
+          >
+            Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function PlayPage() {
   const [time, setTime] = useState(180);
   const [score, setScore] = useState(null);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const timerRef = useRef(null);
   const [results, setResults] = useState({});
+  const [showRecap, setShowRecap] = useState(false);
+  const timerRef = useRef(null);
 
-
-  const months = [
-    "janvier",
-    "fevrier",
-    "mars",
-    "avril",
-    "mai",
-    "juin",
-    "juillet",
-    "aout",
-    "septembre",
-    "octobre",
-    "novembre",
-    "decembre",
-  ];
+  const months = Object.keys(answers);
 
   useEffect(() => {
     timerRef.current = setInterval(() => {
@@ -101,30 +188,25 @@ export default function PlayPage() {
     if (e) e.preventDefault();
     clearInterval(timerRef.current);
 
-    let formScore = 0;
     const form = document.getElementById("game");
     const data = new FormData(form);
 
+    let formScore = 0;
     const newResults = {};
 
     months.forEach((month) => {
-      const userAnswer = normalize(data.get(month) || "");
+      const userAnswer = data.get(month) || "";
+      const normalizedAnswer = normalize(userAnswer);
       const validAnswers = answers[month].map(normalize);
-
-      const isValid = validAnswers.includes(userAnswer);
-
+      const isValid = validAnswers.includes(normalizedAnswer);
       if (isValid) formScore++;
-
-      newResults[month] = isValid;
+      newResults[month] = { userAnswer, isValid };
     });
 
     setResults(newResults);
     setScore(formScore);
 
-    // désactiver les inputs
-    form.querySelectorAll("input").forEach((input) => {
-      input.disabled = true;
-    });
+    form.querySelectorAll("input").forEach((input) => (input.disabled = true));
 
     try {
       await setDoc(doc(db, "scores", crypto.randomUUID()), {
@@ -136,21 +218,18 @@ export default function PlayPage() {
     }
   };
 
-
-
   const handleRetry = () => {
-    setScore(null); // réinitialiser le score
-    setCurrentSlide(0); // revenir au premier slide
+    setScore(null);
+    setCurrentSlide(0);
     setResults({});
+    setShowRecap(false);
 
-    // réinitialiser le formulaire
     const form = document.getElementById("game");
     form.querySelectorAll("input").forEach((input) => {
       input.value = "";
       input.disabled = false;
-     
     });
-    // relancer le timer
+
     setTime(180);
     timerRef.current = setInterval(() => {
       setTime((t) => {
@@ -164,258 +243,266 @@ export default function PlayPage() {
     }, 1000);
   };
 
-  const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % months.length);
+ const nextSlide = () => {
+   if (currentSlide === months.length - 1) return; // décembre
+   setCurrentSlide(currentSlide + 1);
+ };
   const prevSlide = () => {
-    if (currentSlide === 0) return; // si janvier, ne rien faire
+    if (currentSlide === 0) return;
     setCurrentSlide(currentSlide - 1);
   };
-
 
   const minutes = String(Math.floor(time / 60)).padStart(2, "0");
   const seconds = String(time % 60).padStart(2, "0");
 
- return (
-   <div
-     style={{
-       background: "linear-gradient(135deg, #0f3d2e, #1b6b4f)",
-       minHeight: "100vh",
-       padding: "30px",
-       color: "#fff",
-     }}
-   >
-     <h1 style={{ textAlign: "center", marginBottom: "10px" }}>
-       As-tu l&apos;œil pour reconnaître ces métiers ?
-     </h1>
+  return (
+    <div
+      style={{
+        background: "linear-gradient(135deg, #0f3d2e, #1b6b4f)",
+        minHeight: "100vh",
+        padding: "30px",
+        color: "#fff",
+      }}
+    >
+      <h1 style={{ textAlign: "center", marginBottom: "10px" }}>
+        As-tu l&apos;œil pour reconnaître ces métiers ?
+      </h1>
 
-     <p
-       style={{
-         textAlign: "center",
-         fontSize: "1.2rem",
-         marginBottom: "25px",
-         color: "#ffd166",
-       }}
-     >
-       Temps restant : {minutes}:{seconds}
-     </p>
+      <p
+        style={{
+          textAlign: "center",
+          fontSize: "1.2rem",
+          marginBottom: "25px",
+          color: "#ffd166",
+        }}
+      >
+        Temps restant : {minutes}:{seconds}
+      </p>
 
-     <form id="game" onSubmit={handleSubmit}>
-       {/* ================= SLIDER ================= */}
-       <div
-         className="slider-container"
-         style={{
-           display: "flex",
-           flexDirection: "column",
-           alignItems: "center",
-           width: "100%",
-           maxWidth: "1200px",
-           margin: "0 auto 40px",
-           gap: "15px",
-         }}
-       >
-         {/* WRAPPER SLIDES (IMPORTANT) */}
-         <div className="slides" style={{ width: "100%" }}>
-           {months.map((month, idx) => (
-             <div
-               key={month}
-               className={`card slide ${idx === currentSlide ? "active" : ""}`}
-               style={{
-                 display: idx === currentSlide ? "flex" : "none",
-                 flexDirection: "column",
-                 alignItems: "center",
-                 background: "rgba(255,255,255,.08)",
-                 borderRadius: "24px",
-                 padding: "18px",
-                 height: "auto",
-                 minHeight: "auto",
-                 width: "100%",
-                 position: "relative",
-               }}
-             >
-               <Image
-                 src={`/images/${month}.png`}
-                 alt={month}
-                 width={1000}
-                 height={600}
-                 className="slide-image"
-                 style={{
-                   width: "100%",
-                   maxWidth: "1000px",
-                   maxHeight: "65vh",
-                   objectFit: "contain",
+      <form id="game" onSubmit={handleSubmit}>
+        <div
+          className="slider-container"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            width: "100%",
+            maxWidth: "1200px",
+            margin: "0 auto 40px",
+            gap: "15px",
+          }}
+        >
+          <div className="slides" style={{ width: "100%" }}>
+            {months.map((month, idx) => (
+              <div
+                key={month}
+                className={`card slide ${idx === currentSlide ? "active" : ""}`}
+                style={{
+                  display: idx === currentSlide ? "flex" : "none",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  background: "rgba(255,255,255,.08)",
+                  borderRadius: "24px",
+                  padding: "18px",
+                  width: "100%",
+                  position: "relative",
+                }}
+              >
+                <Image
+                  src={`/images/${month}.png`}
+                  alt={month}
+                  width={1000}
+                  height={600}
+                  className="slide-image"
+                  style={{
+                    width: "100%",
+                    maxWidth: "1000px",
+                    maxHeight: "65vh",
+                    objectFit: "contain",
+                    marginBottom: "8px",
+                  }}
+                />
 
-                   marginBottom: "8px",
-                 }}
-               />
+                <label
+                  style={{
+                    fontSize: "1.6rem",
+                    marginBottom: "8px",
+                  }}
+                >
+                  Métier N°{idx + 1}
+                </label>
 
-               <label
-                 style={{
-                   fontSize: "1.6rem",
-                   marginBottom: "8px",
-                 }}
-               >
-                 Métier N°{idx + 1}
-               </label>
+                <input
+                  name={month}
+                  type="text"
+                  disabled={score !== null}
+                  style={{
+                    width: "75%",
+                    maxWidth: "350px",
+                    fontSize: "1.2rem",
+                    padding: "14px 16px",
+                    borderRadius: "12px",
+                    border: "none",
+                    textAlign: "center",
+                    backgroundColor: score !== null ? "#e0e0e0" : "white",
+                  }}
+                />
+              </div>
+            ))}
+          </div>
 
-               <input
-                 name={month}
-                 type="text"
-                 disabled={score !== null} // désactive après validation
-                 style={{
-                   width: "75%",
-                   maxWidth: "350px",
-                   fontSize: "1.2rem",
-                   padding: "14px 16px",
-                   borderRadius: "12px",
-                   border: "none",
-                   textAlign: "center",
-                   backgroundColor: score !== null ? "#e0e0e0" : "white", // gris après validation, blanc avant
-                  
-                 }}
-               />
+          <div
+            className="slider-nav-buttons"
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: "25px",
+              marginBottom: "-25px",
+            }}
+          >
+            <button
+              type="button"
+              onClick={prevSlide}
+              style={{
+                background: "#ffd166",
+                border: "none",
+                borderRadius: "50%",
+                width: "55px",
+                height: "55px",
+                fontSize: "1.6rem",
+                cursor: "pointer",
+              }}
+            >
+              ◀
+            </button>
 
-               {score !== null && results[month] !== undefined && (
-                 <span className={`status ${results[month] ? "good" : "bad"}`}>
-                   {results[month] ? (
-                     <Check className="status-icon" />
-                   ) : (
-                     <X className="status-icon" />
-                   )}
-                 </span>
-               )}
-             </div>
-           ))}
-         </div>
+            <button
+              type="button"
+              onClick={nextSlide}
+              style={{
+                background: "#ffd166",
+                border: "none",
+                borderRadius: "50%",
+                width: "55px",
+                height: "55px",
+                fontSize: "1.6rem",
+                cursor: "pointer",
+              }}
+            >
+              ▶
+            </button>
+          </div>
+        </div>
 
-         {/* NAVIGATION */}
-         <div
-           className="slider-nav-buttons"
-           style={{
-             display: "flex",
-             justifyContent: "center",
-             gap: "25px",
-             marginBottom: "-25px",
-           }}
-         >
-           <button
-             type="button"
-             onClick={prevSlide}
-             style={{
-               background: "#ffd166",
-               border: "none",
-               borderRadius: "50%",
-               width: "55px",
-               height: "55px",
-               fontSize: "1.6rem",
-               cursor: "pointer",
-             }}
-           >
-             ◀
-           </button>
+        {currentSlide === months.length - 1 && (
+          <button
+            type="submit"
+            style={{
+              display: "block",
+              margin: "0 auto",
+              padding: "16px 40px",
+              borderRadius: "999px",
+              border: "none",
+              fontWeight: "bold",
+              fontSize: "1.2rem",
+              background: "linear-gradient(135deg, #ffd166, #ff9f1c)",
+              cursor: "pointer",
+            }}
+          >
+            Valider mes réponses
+          </button>
+        )}
+      </form>
 
-           <button
-             type="button"
-             onClick={nextSlide}
-             style={{
-               background: "#ffd166",
-               border: "none",
-               borderRadius: "50%",
-               width: "55px",
-               height: "55px",
-               fontSize: "1.6rem",
-               cursor: "pointer",
-             }}
-           >
-             ▶
-           </button>
-         </div>
-       </div>
+      {score !== null && (
+        <div
+          className="result"
+          style={{
+            textAlign: "center",
+            marginTop: "25px",
+            fontSize: "1.4rem",
+          }}
+        >
+          {score === 12 ? (
+            <>
+              🎉 Bravo ! 12/12 métiers trouvés !
+              <br />
+              <a
+                href="/classement"
+                style={{
+                  color: "#ffd166",
+                  textDecoration: "underline",
+                  fontWeight: "bold",
+                }}
+              >
+                Voir le classement
+              </a>
+            </>
+          ) : (
+            <>
+              🎯 Score : {score}/12 métiers trouvés !
+              <br />
+              Vois ton résultat et réessaie encore pour améliorer ton score.
+            </>
+          )}
+          <div style={{ marginTop: "20px" }}>
+            <button
+              onClick={() => setShowRecap(true)}
+              style={{
+                padding: "12px 30px",
+                borderRadius: "999px",
+                background: "linear-gradient(135deg, #ffd166, #ff9f1c)",
+                border: "none",
+                fontWeight: "bold",
+                cursor: "pointer",
+                color: "#1b1b1b",
+                boxShadow: "0 8px 20px rgba(0,0,0,0.3)",
+                marginBottom: "10px",
+              }}
+            >
+              Voir mon résultat
+            </button>
 
-       {/* SUBMIT */}
-       {currentSlide === months.length - 1 && (
-         <button
-           type="submit"
-           style={{
-             display: "block",
-             margin: "0 auto",
-             padding: "16px 40px",
-             borderRadius: "999px",
-             border: "none",
-             fontWeight: "bold",
-             fontSize: "1.2rem",
-             background: "linear-gradient(135deg, #ffd166, #ff9f1c)",
-             cursor: "pointer",
-           }}
-         >
-           Valider mes réponses
-         </button>
-       )}
-     </form>
+            <button
+              onClick={handleRetry}
+              style={{
+                display: "block",
+                margin: "0 auto",
+                padding: "16px 40px",
+                borderRadius: "999px",
+                border: "none",
+                fontWeight: "bold",
+                fontSize: "1.2rem",
+                background: "linear-gradient(135deg, #ffd166, #ff9f1c)",
+                cursor: "pointer",
+              }}
+            >
+              Réessayer
+            </button>
+          </div>
 
-     {/* RESULT */}
-     {score !== null && (
-       <div
-         className="result"
-         style={{
-           textAlign: "center",
-           marginTop: "25px",
-           fontSize: "1.4rem",
-         }}
-       >
-         {score === 12 ? (
-           <>
-             🎉 Bravo ! 12/12 métiers trouvés !
-             <br />
-             <a
-               href="/classement"
-               style={{
-                 color: "#ffd166",
-                 textDecoration: "underline",
-                 fontWeight: "bold",
-               }}
-             >
-               Voir le classement
-             </a>
-           </>
-         ) : (
-           <>
-             🎯 Score : {score}/12 métiers trouvés !
-             <br />
-             Réessaie encore pour améliorer ton score.
-             <br />
-             🏆
-             <a
-               href="/rank"
-               style={{
-                 color: "#ffd166",
-                 fontWeight: "bold",
-               }}
-             >
-               Voir le Top 10
-             </a>
-           </>
-         )}
+          <div
+            style={{
+              marginTop: "30px",
+            }}
+          >
+            🏆
+            <a
+              href="/rank"
+              style={{
+                color: "#ffd166",
+                fontWeight: "bold",
+              }}
+            >
+              Voir le Top 10
+            </a>
+          </div>
+        </div>
+      )}
 
-         <div style={{ marginTop: "20px" }}>
-           <button
-             onClick={handleRetry}
-             style={{
-               display: "block",
-               margin: "0 auto",
-               padding: "16px 40px",
-               borderRadius: "999px",
-               border: "none",
-               fontWeight: "bold",
-               fontSize: "1.2rem",
-               background: "linear-gradient(135deg, #ffd166, #ff9f1c)",
-               cursor: "pointer",
-             }}
-           >
-             Réessayer
-           </button>
-         </div>
-       </div>
-     )}
-   </div>
- );
-
+      {showRecap && (
+        <RecapModal results={results} onClose={() => setShowRecap(false)} />
+      )}
+    </div>
+  );
 }
