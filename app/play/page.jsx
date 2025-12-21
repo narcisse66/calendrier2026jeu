@@ -196,7 +196,7 @@ function RecapModal({ results, score, onClose }) {
 }
 
 export default function PlayPage() {
-  const [time, setTime] = useState(180);
+  const [time, setTime] = useState(10);
   const [score, setScore] = useState(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [results, setResults] = useState({});
@@ -208,9 +208,19 @@ export default function PlayPage() {
   useEffect(() => {
     timerRef.current = setInterval(() => {
       setTime((t) => {
+
+
         if (t <= 1) {
           clearInterval(timerRef.current);
-          handleSubmit();
+            const sound = document.getElementById("endSound");
+            if (sound) {
+              sound.currentTime = 0;
+              sound.play().catch(() => {});
+            }
+         setTimeout(() => {
+           handleSubmit();
+         }, 1000);
+
           return 0;
         }
         return t - 1;
@@ -301,6 +311,8 @@ export default function PlayPage() {
         color: "#fff",
       }}
     >
+      <audio id="endSound" src="/finjeu.mp3" preload="auto" />
+
       <h1 style={{ textAlign: "center", marginBottom: "10px" }}>
         As-tu l&apos;œil pour reconnaître ces métiers ?
       </h1>
@@ -451,7 +463,6 @@ export default function PlayPage() {
         )}
       </form>
 
-
       {score !== null && (
         <div
           className="result"
@@ -461,14 +472,7 @@ export default function PlayPage() {
             fontSize: "1.4rem",
           }}
         >
-
-
-
-
-
           <div style={{ marginTop: "20px" }}>
-         
-
             <button
               onClick={handleRetry}
               style={{
