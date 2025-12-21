@@ -53,7 +53,9 @@ const normalize = (text) =>
     .trim();
 
 // Composant Modal
-function RecapModal({ results, onClose }) {
+
+function RecapModal({ results, score, onClose }) {
+
   const months = Object.keys(results);
 
   return (
@@ -85,6 +87,39 @@ function RecapModal({ results, onClose }) {
           backdropFilter: "blur(10px)",
         }}
       >
+        <div
+          style={{
+            textAlign: "center",
+            marginBottom: "25px",
+            fontSize: "2rem",
+            fontWeight: "800",
+            letterSpacing: "1px",
+            color: "#fff",
+          }}
+        >
+          {score === 12 ? (
+            <>
+              🎉 Bravo !
+              <br />
+              <span style={{ color: "#ffd166", fontSize: "2.4rem" }}>
+                12 / 12
+              </span>
+              <br />
+              métiers trouvés !
+            </>
+          ) : (
+            <>
+              🎯 Score
+              <br />
+              <span style={{ color: "#ffd166", fontSize: "2.4rem" }}>
+                {score} / 12
+              </span>
+              <br />
+              métiers trouvés
+            </>
+          )}
+        </div>
+
         <h2
           style={{
             textAlign: "center",
@@ -205,6 +240,8 @@ export default function PlayPage() {
 
     setResults(newResults);
     setScore(formScore);
+   
+    setShowRecap(true); //  ouvre le modal automatiquement
 
     form.querySelectorAll("input").forEach((input) => (input.disabled = true));
 
@@ -414,6 +451,7 @@ export default function PlayPage() {
         )}
       </form>
 
+
       {score !== null && (
         <div
           className="result"
@@ -423,45 +461,13 @@ export default function PlayPage() {
             fontSize: "1.4rem",
           }}
         >
-          {score === 12 ? (
-            <>
-              🎉 Bravo ! 12/12 métiers trouvés !
-              <br />
-              <a
-                href="/classement"
-                style={{
-                  color: "#ffd166",
-                  textDecoration: "underline",
-                  fontWeight: "bold",
-                }}
-              >
-                Voir le classement
-              </a>
-            </>
-          ) : (
-            <>
-              🎯 Score : {score}/12 métiers trouvés !
-              <br />
-              Vois ton résultat et réessaie encore pour améliorer ton score.
-            </>
-          )}
+
+
+
+
+
           <div style={{ marginTop: "20px" }}>
-            <button
-              onClick={() => setShowRecap(true)}
-              style={{
-                padding: "12px 30px",
-                borderRadius: "999px",
-                background: "linear-gradient(135deg, #ffd166, #ff9f1c)",
-                border: "none",
-                fontWeight: "bold",
-                cursor: "pointer",
-                color: "#1b1b1b",
-                boxShadow: "0 8px 20px rgba(0,0,0,0.3)",
-                marginBottom: "10px",
-              }}
-            >
-              Voir mon résultat
-            </button>
+         
 
             <button
               onClick={handleRetry}
@@ -501,7 +507,11 @@ export default function PlayPage() {
       )}
 
       {showRecap && (
-        <RecapModal results={results} onClose={() => setShowRecap(false)} />
+        <RecapModal
+          results={results}
+          score={score}
+          onClose={() => setShowRecap(false)}
+        />
       )}
     </div>
   );
