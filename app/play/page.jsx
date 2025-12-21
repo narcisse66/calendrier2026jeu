@@ -196,7 +196,7 @@ function RecapModal({ results, score, onClose }) {
 }
 
 export default function PlayPage() {
-  const [time, setTime] = useState(10);
+  const [time, setTime] = useState(180);
   const [score, setScore] = useState(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [results, setResults] = useState({});
